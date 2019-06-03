@@ -1,0 +1,677 @@
+buildCmd: mvn -e -X -Dmaven.test.skip=true compile
+testCmd: true
+lineLength: 4096
+skipVerification: true
+cbmcArguments:
+  # Do not generate coverage comments on generated tests.
+  java-generate-no-comments: true
+  # Constrain the size of arrays created in the analyzed code.
+  java-max-vla-length: 100000
+phases:
+  -
+    #Phase 0 PRETTY, SIMPLE and SMART - pretty tests, do not test private methods directly, Smart-Harness
+    timeout: 180
+    cbmcArguments:
+      # Use simple models first containers (ArrayList, HashMap, HashSet,...) will have a maximum size of one.
+      classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
+      # Set a limit on the number of instructions that can be generated as part of a test trace.
+      depth: 1500
+      # Maximum allowed length for an array passed as test input.
+      max-nondet-array-length: 10
+      # Bound the length of input strings.
+      max-nondet-string-length: 10
+      # Add constraint that strings are printable
+      string-printable: true
+      # Make implicit runtime exceptions explicit.
+      throw-runtime-exceptions: false
+      # Set an upper bound on loop unwinding.
+      unwind: 1
+      # Do not test any methods that have the specified access level.
+      do-not-test-methods-with-access: [ private ]
+      # Instrument the entry point function only.
+      cover-function-only: false
+      # Instrument the file as opposed to the function only
+      cover-only: file
+      # Set string input value  
+      string-input-value: ["foo", "Bar", "BAZ", "1234", "1a 2b 3c", "A1B2C3", "a,b,c", "1", "2", "3", "a/b/c", "a'b'c", ",", "/", "'"]
+      # Instantiate classes using the simplest constructor strategy 
+      smart-harness: simplest-constructor-and-nondet
+  -
+    #Phase 1 PRETTY AND COMPLEX - standard models only, pretty tests, do not test private methods directly, input factory
+    timeout: 180
+    cbmcArguments:
+      # Use the standard models library
+      classpath: '/tools/cbmc/models.jar:.'
+      # Set a limit on the number of instructions that can be generated as part of a test trace.
+      depth: false
+      # never initialize reference-typed parameter to the entry point with null
+      java-assume-inputs-non-null: true
+      # Maximum allowed length for an array passed as test input.
+      max-nondet-array-length: 10
+      # Bound the length of input strings.
+      max-nondet-string-length: 10
+      # Add constraint that strings are printable
+      string-printable: true
+      # Set string input value  
+      string-input-value: ["foo", "Bar", "BAZ", "1234", "1a 2b 3c", "A1B2C3", "a,b,c", "1", "2", "3", "a/b/c", "a'b'c", ",", "/", "'"]
+      # Make implicit runtime exceptions explicit.
+      throw-runtime-exceptions: false
+      # Set an upper bound on loop unwinding.
+      unwind: 2
+      # Do not test any methods that have the specified access level.
+      do-not-test-methods-with-access: [ private ]
+      # Instrument the entry point function only.
+      cover-function-only: false
+      # instrument the file as opposed to the function only
+      cover-only: file
+      # Limit input factory recursive depth (default 0 = no recursion allowed)
+      java-test-input-factory-bmc-recursion-limit: 4
+  -
+    #Phase 2 FIFO Strategy - pretty tests, do not test private methods directly, fifo
+    timeout: 100
+    cbmcArguments:
+      # Use the standard models library
+      classpath: '/tools/cbmc/models.jar:.'
+      # Set a limit on the number of instructions that can be generated as part of a test trace.
+      depth: false
+      # never initialize reference-typed parameter to the entry point with null
+      java-assume-inputs-non-null: true
+      # Maximum allowed length for an array passed as test input.
+      max-nondet-array-length: 30
+      # Add constraint that strings are printable
+      max-nondet-string-length: 100
+      # Explores the program tree breadth-first.
+      paths: fifo
+      # Set string input value  
+      string-input-value: ["foo", "Bar", "BAZ", "1234", "1a 2b 3c", "A1B2C3", "a,b,c", "1", "2", "3", "a/b/c", "a'b'c", ",", "/", "'"]
+      # Add constraint that strings are printable
+      string-printable: true
+      # Make implicit runtime exceptions explicit.
+      throw-runtime-exceptions: false
+      # Set an upper bound on loop unwinding.
+      unwind: false
+      # Do not test any methods that have the specified access level.
+      do-not-test-methods-with-access: [ private ]
+      # Instrument the entry point function only.
+      cover-function-only: false
+      # instrument the file as opposed to the function only
+      cover-only: file
+  -
+    #Phase 3 Exceptions - do not test private methods directly
+    timeout: 180
+    cbmcArguments:
+      # Use simple models containers first (ArrayList, HashMap, HashSet,...) will have a maximum size of one.
+      classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
+      # Set a limit on the number of instructions that can be generated as part of a test trace.
+      depth: false
+      # Maximum allowed length for an array passed as test input.
+      max-nondet-array-length: 30
+      # Bound the length of input strings.
+      max-nondet-string-length: 30
+      # Add constraint that strings are printable
+      string-printable: false
+      # Make implicit runtime exceptions explicit.
+      throw-runtime-exceptions: true
+      # Set an upper bound on loop unwinding.
+      unwind: 3
+      # Do not test any methods that have the specified access level.
+      do-not-test-methods-with-access: [ private ]
+      # Instrument the entry point function only.
+      cover-function-only: false
+      # instrument the file as opposed to the function only
+      cover-only: file
+  -
+    #Phase 4 Direct testing - test private methods directly, increased reflection
+    timeout: 180
+    cbmcArguments:
+      # Use simple models containers first (ArrayList, HashMap, HashSet,...) will have a maximum size of one.
+      classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
+      # Set a limit on the number of instructions that can be generated as part of a test trace.
+      depth: 1500
+      # never initialize reference-typed parameter to the entry point with null
+      java-assume-inputs-non-null: true
+      # Maximum allowed length for an array passed as test input.
+      max-nondet-array-length: 10
+      # Bound the length of input strings.
+      max-nondet-string-length: 10
+      # Add constraint that strings are printable
+      string-printable: true
+      # Make implicit runtime exceptions explicit.
+      throw-runtime-exceptions: false
+      # Set an upper bound on loop unwinding.
+      unwind: 1
+      # Set string input value  
+      string-input-value: ["foo", "Bar", "BAZ", "1234", "1a 2b 3c", "A1B2C3", "a,b,c", "1", "2", "3", "a/b/c", "a'b'c", ",", "/", "'"]
+      # If the logs contain output of the following then proceed to phase X
+    nextPhase:
+      # If the function is not analysable then do not pass onto the next phase
+      not_analyzed: null
+  -
+    #PHASE 5 Mocking - aggressive mocking, do not test private methods directly
+    timeout: 180
+    cbmcArguments:
+      # Use simple models containers first (ArrayList, HashMap, HashSet,...) will have a maximum size of one.
+      classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
+      # Set a limit on the number of instructions that can be generated as part of a test trace.
+      depth: 3000
+      # never initialize reference-typed parameter to the entry point with null
+      java-assume-inputs-non-null: true
+      # Only load the class (and related inner/outer classes) containing the method under test,
+      load-containing-class-only: true
+      # Maximum allowed length for an array passed as test input.
+      max-nondet-array-length: 30
+      # Bound the length of input strings.
+      max-nondet-string-length: 100
+      # Add constraint that strings are printable
+      string-printable: false
+      # Make implicit runtime exceptions explicit.
+      throw-runtime-exceptions: true
+      # Set an upper bound on loop unwinding.
+      unwind: 3
+      # Do not test any methods that have the specified access level.
+      do-not-test-methods-with-access: [ private ]
+      # Instrument the entry point function only.
+      cover-function-only: false
+      # instrument the file as opposed to the function only
+      cover-only: file
+units:
+ - target:
+   - dir: target/classes
+     file: org/joda/time/field/FieldUtils.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/field/FieldUtils.java
+   - dir: target/classes
+     file: org/joda/time/DateTimeFieldType.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/DateTimeFieldType.java
+   - dir: target/classes
+     file: org/joda/time/IllegalFieldValueException.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/IllegalFieldValueException.java
+   - dir: target/classes
+     file: org/joda/time/DateTimeField.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/DateTimeField.java
+ - target:
+   - dir: target/classes
+     file: org/joda/time/Months.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/Months.java
+   - dir: target/classes
+     file: org/joda/time/format/InternalParser.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/InternalParser.java
+   - dir: target/classes
+     file: org/joda/time/tz/ZoneInfoProvider$1.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/tz/ZoneInfoProvider.java
+   - dir: target/classes
+     file: org/joda/time/convert/PeriodConverter.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/convert/PeriodConverter.java
+   - dir: target/classes
+     file: org/joda/time/chrono/BaseChronology.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/chrono/BaseChronology.java
+   - dir: target/classes
+     file: org/joda/time/format/ISOPeriodFormat.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/ISOPeriodFormat.java
+   - dir: target/classes
+     file: org/joda/time/chrono/AssembledChronology.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/chrono/AssembledChronology.java
+   - dir: target/classes
+     file: org/joda/time/format/PeriodFormatterBuilder$Composite.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/PeriodFormatterBuilder.java
+   - dir: target/classes
+     file: org/joda/time/convert/ConverterManager.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/convert/ConverterManager.java
+   - dir: target/classes
+     file: org/joda/time/Chronology.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/Chronology.java
+   - dir: target/classes
+     file: org/joda/time/field/FieldUtils.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/field/FieldUtils.java
+   - dir: target/classes
+     file: org/joda/time/Period.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/Period.java
+   - dir: target/classes
+     file: org/joda/time/ReadableInterval.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/ReadableInterval.java
+   - dir: target/classes
+     file: org/joda/time/format/DateTimeParserBucket$SavedField.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/DateTimeParserBucket.java
+   - dir: target/classes
+     file: org/joda/time/DurationFieldType.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/DurationFieldType.java
+   - dir: target/classes
+     file: org/joda/time/format/PeriodFormatter.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/PeriodFormatter.java
+   - dir: target/classes
+     file: org/joda/time/IllegalInstantException.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/IllegalInstantException.java
+   - dir: target/classes
+     file: org/joda/time/format/PeriodFormatterBuilder$PeriodFieldAffix.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/PeriodFormatterBuilder.java
+   - dir: target/classes
+     file: org/joda/time/format/PeriodFormatterBuilder$Separator.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/PeriodFormatterBuilder.java
+   - dir: target/classes
+     file: org/joda/time/format/PeriodParser.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/PeriodParser.java
+   - dir: target/classes
+     file: org/joda/time/format/PeriodFormatterBuilder$SimpleAffix.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/PeriodFormatterBuilder.java
+   - dir: target/classes
+     file: org/joda/time/DateTimeField.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/DateTimeField.java
+   - dir: target/classes
+     file: org/joda/time/format/PeriodFormatterBuilder$FieldFormatter.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/PeriodFormatterBuilder.java
+   - dir: target/classes
+     file: org/joda/time/base/BaseSingleFieldPeriod.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/base/BaseSingleFieldPeriod.java
+   - dir: target/classes
+     file: org/joda/time/format/PeriodFormatterBuilder$IgnorableAffix.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/PeriodFormatterBuilder.java
+   - dir: target/classes
+     file: org/joda/time/convert/Converter.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/convert/Converter.java
+   - dir: target/classes
+     file: org/joda/time/chrono/AssembledChronology$Fields.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/chrono/AssembledChronology.java
+   - dir: target/classes
+     file: org/joda/time/LocalDate.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/LocalDate.java
+   - dir: target/classes
+     file: org/joda/time/tz/ZoneInfoProvider.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/tz/ZoneInfoProvider.java
+   - dir: target/classes
+     file: org/joda/time/format/PeriodFormatterBuilder.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/PeriodFormatterBuilder.java
+   - dir: target/classes
+     file: org/joda/time/DurationField.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/DurationField.java
+   - dir: target/classes
+     file: org/joda/time/ReadablePartial.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/ReadablePartial.java
+   - dir: target/classes
+     file: org/joda/time/convert/ConverterSet$Entry.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/convert/ConverterSet.java
+   - dir: target/classes
+     file: org/joda/time/MutablePeriod.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/MutablePeriod.java
+   - dir: target/classes
+     file: org/joda/time/PeriodType.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/PeriodType.java
+   - dir: target/classes
+     file: org/joda/time/chrono/ISOChronology.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/chrono/ISOChronology.java
+   - dir: target/classes
+     file: org/joda/time/DateTimeFieldType.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/DateTimeFieldType.java
+   - dir: target/classes
+     file: org/joda/time/base/BasePeriod.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/base/BasePeriod.java
+   - dir: target/classes
+     file: org/joda/time/format/FormatUtils.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/FormatUtils.java
+   - dir: target/classes
+     file: org/joda/time/field/UnsupportedDurationField.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/field/UnsupportedDurationField.java
+   - dir: target/classes
+     file: org/joda/time/ReadableInstant.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/ReadableInstant.java
+   - dir: target/classes
+     file: org/joda/time/tz/UTCProvider.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/tz/UTCProvider.java
+   - dir: target/classes
+     file: org/joda/time/format/DateTimeFormatter.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/DateTimeFormatter.java
+   - dir: target/classes
+     file: org/joda/time/format/DateTimeParserBucket.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/DateTimeParserBucket.java
+   - dir: target/classes
+     file: org/joda/time/ReadablePeriod.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/ReadablePeriod.java
+   - dir: target/classes
+     file: org/joda/time/chrono/ZonedChronology.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/chrono/ZonedChronology.java
+   - dir: target/classes
+     file: org/joda/time/base/AbstractPeriod.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/base/AbstractPeriod.java
+   - dir: target/classes
+     file: org/joda/time/format/PeriodFormatterBuilder$Literal.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/PeriodFormatterBuilder.java
+   - dir: target/classes
+     file: org/joda/time/IllegalFieldValueException.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/IllegalFieldValueException.java
+   - dir: target/classes
+     file: org/joda/time/tz/FixedDateTimeZone.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/tz/FixedDateTimeZone.java
+   - dir: target/classes
+     file: org/joda/time/convert/ConverterSet.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/convert/ConverterSet.java
+   - dir: target/classes
+     file: org/joda/time/field/UnsupportedDateTimeField.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/field/UnsupportedDateTimeField.java
+   - dir: target/classes
+     file: org/joda/time/DateTimeUtils.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/DateTimeUtils.java
+   - dir: target/classes
+     file: org/joda/time/DateTimeZone.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/DateTimeZone.java
+   - dir: target/classes
+     file: org/joda/time/tz/Provider.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/tz/Provider.java
+   - dir: target/classes
+     file: org/joda/time/format/PeriodFormatterBuilder$CompositeAffix.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/PeriodFormatterBuilder.java
+ - target:
+   - dir: target/classes
+     file: org/joda/time/format/FormatUtils.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/FormatUtils.java
+ - target:
+   - dir: target/classes
+     file: org/joda/time/Hours.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/Hours.java
+   - dir: target/classes
+     file: org/joda/time/format/InternalParser.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/InternalParser.java
+   - dir: target/classes
+     file: org/joda/time/tz/ZoneInfoProvider$1.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/tz/ZoneInfoProvider.java
+   - dir: target/classes
+     file: org/joda/time/convert/PeriodConverter.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/convert/PeriodConverter.java
+   - dir: target/classes
+     file: org/joda/time/chrono/BaseChronology.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/chrono/BaseChronology.java
+   - dir: target/classes
+     file: org/joda/time/Days.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/Days.java
+   - dir: target/classes
+     file: org/joda/time/chrono/AssembledChronology.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/chrono/AssembledChronology.java
+   - dir: target/classes
+     file: org/joda/time/format/PeriodFormatterBuilder$Composite.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/PeriodFormatterBuilder.java
+   - dir: target/classes
+     file: org/joda/time/convert/ConverterManager.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/convert/ConverterManager.java
+   - dir: target/classes
+     file: org/joda/time/Chronology.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/Chronology.java
+   - dir: target/classes
+     file: org/joda/time/ReadableInterval.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/ReadableInterval.java
+   - dir: target/classes
+     file: org/joda/time/Period.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/Period.java
+   - dir: target/classes
+     file: org/joda/time/Duration.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/Duration.java
+   - dir: target/classes
+     file: org/joda/time/format/DateTimeParserBucket$SavedField.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/DateTimeParserBucket.java
+   - dir: target/classes
+     file: org/joda/time/DurationFieldType.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/DurationFieldType.java
+   - dir: target/classes
+     file: org/joda/time/format/PeriodFormatter.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/PeriodFormatter.java
+   - dir: target/classes
+     file: org/joda/time/IllegalInstantException.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/IllegalInstantException.java
+   - dir: target/classes
+     file: org/joda/time/format/PeriodFormatterBuilder$PeriodFieldAffix.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/PeriodFormatterBuilder.java
+   - dir: target/classes
+     file: org/joda/time/LocalTime.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/LocalTime.java
+   - dir: target/classes
+     file: org/joda/time/field/FieldUtils.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/field/FieldUtils.java
+   - dir: target/classes
+     file: org/joda/time/format/PeriodParser.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/PeriodParser.java
+   - dir: target/classes
+     file: org/joda/time/format/PeriodFormatterBuilder$SimpleAffix.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/PeriodFormatterBuilder.java
+   - dir: target/classes
+     file: org/joda/time/base/AbstractDuration.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/base/AbstractDuration.java
+   - dir: target/classes
+     file: org/joda/time/DateTimeField.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/DateTimeField.java
+   - dir: target/classes
+     file: org/joda/time/Weeks.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/Weeks.java
+   - dir: target/classes
+     file: org/joda/time/base/BaseSingleFieldPeriod.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/base/BaseSingleFieldPeriod.java
+   - dir: target/classes
+     file: org/joda/time/format/PeriodFormatterBuilder$IgnorableAffix.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/PeriodFormatterBuilder.java
+   - dir: target/classes
+     file: org/joda/time/convert/Converter.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/convert/Converter.java
+   - dir: target/classes
+     file: org/joda/time/format/PeriodFormatterBuilder$Literal.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/PeriodFormatterBuilder.java
+   - dir: target/classes
+     file: org/joda/time/chrono/AssembledChronology$Fields.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/chrono/AssembledChronology.java
+   - dir: target/classes
+     file: org/joda/time/ReadablePeriod.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/ReadablePeriod.java
+   - dir: target/classes
+     file: org/joda/time/tz/ZoneInfoProvider.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/tz/ZoneInfoProvider.java
+   - dir: target/classes
+     file: org/joda/time/Minutes.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/Minutes.java
+   - dir: target/classes
+     file: org/joda/time/DurationField.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/DurationField.java
+   - dir: target/classes
+     file: org/joda/time/ReadablePartial.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/ReadablePartial.java
+   - dir: target/classes
+     file: org/joda/time/convert/ConverterSet$Entry.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/convert/ConverterSet.java
+   - dir: target/classes
+     file: org/joda/time/base/BaseDuration.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/base/BaseDuration.java
+   - dir: target/classes
+     file: org/joda/time/MutablePeriod.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/MutablePeriod.java
+   - dir: target/classes
+     file: org/joda/time/PeriodType.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/PeriodType.java
+   - dir: target/classes
+     file: org/joda/time/chrono/ISOChronology.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/chrono/ISOChronology.java
+   - dir: target/classes
+     file: org/joda/time/DateTimeFieldType.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/DateTimeFieldType.java
+   - dir: target/classes
+     file: org/joda/time/format/FormatUtils.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/FormatUtils.java
+   - dir: target/classes
+     file: org/joda/time/field/UnsupportedDurationField.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/field/UnsupportedDurationField.java
+   - dir: target/classes
+     file: org/joda/time/ReadableInstant.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/ReadableInstant.java
+   - dir: target/classes
+     file: org/joda/time/format/ISOPeriodFormat.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/ISOPeriodFormat.java
+   - dir: target/classes
+     file: org/joda/time/format/PeriodFormatterBuilder$FieldFormatter.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/PeriodFormatterBuilder.java
+   - dir: target/classes
+     file: org/joda/time/format/DateTimeFormatter.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/DateTimeFormatter.java
+   - dir: target/classes
+     file: org/joda/time/format/DateTimeParserBucket.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/DateTimeParserBucket.java
+   - dir: target/classes
+     file: org/joda/time/base/BasePeriod.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/base/BasePeriod.java
+   - dir: target/classes
+     file: org/joda/time/chrono/ZonedChronology.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/chrono/ZonedChronology.java
+   - dir: target/classes
+     file: org/joda/time/base/AbstractPeriod.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/base/AbstractPeriod.java
+   - dir: target/classes
+     file: org/joda/time/Seconds.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/Seconds.java
+   - dir: target/classes
+     file: org/joda/time/IllegalFieldValueException.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/IllegalFieldValueException.java
+   - dir: target/classes
+     file: org/joda/time/tz/FixedDateTimeZone.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/tz/FixedDateTimeZone.java
+   - dir: target/classes
+     file: org/joda/time/format/PeriodFormatterBuilder$Separator.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/PeriodFormatterBuilder.java
+   - dir: target/classes
+     file: org/joda/time/convert/ConverterSet.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/convert/ConverterSet.java
+   - dir: target/classes
+     file: org/joda/time/field/UnsupportedDateTimeField.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/field/UnsupportedDateTimeField.java
+   - dir: target/classes
+     file: org/joda/time/tz/UTCProvider.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/tz/UTCProvider.java
+   - dir: target/classes
+     file: org/joda/time/DateTimeUtils.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/DateTimeUtils.java
+   - dir: target/classes
+     file: org/joda/time/format/PeriodFormatterBuilder.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/PeriodFormatterBuilder.java
+   - dir: target/classes
+     file: org/joda/time/DateTimeZone.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/DateTimeZone.java
+   - dir: target/classes
+     file: org/joda/time/tz/Provider.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/tz/Provider.java
+   - dir: target/classes
+     file: org/joda/time/format/PeriodFormatterBuilder$CompositeAffix.class
+     sourceDir: src/main/java
+     sourceFile: org/joda/time/format/PeriodFormatterBuilder.java
